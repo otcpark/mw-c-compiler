@@ -37,7 +37,7 @@ void TokenNode::print() {
 // scan a number, integer or float
 string scanNumber() {
   string buffer = "";
-
+  
   // Implement this.
 
   return buffer;
@@ -53,7 +53,16 @@ pair<vector<TokenNode>, vector<string>> scan(const string &file_name) {
   vector<TokenNode> tokens = {};
 
   // Implement this.
+  if (infile.is_open()) {
 
+      std::string line;
+      while (std::getline(infile, line))
+          cout << line;
+
+
+
+
+  }
   // close the file
   infile.close();
 
