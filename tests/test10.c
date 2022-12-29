@@ -14,7 +14,8 @@ int main() {
         printf(i);
         i = i + 1;
     }
-
+   
+    
     int foo;
     for (foo = 32; foo > 29; foo = foo - 1) {
         printf(foo);
