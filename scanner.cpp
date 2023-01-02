@@ -36,75 +36,58 @@ void TokenNode::print() {
 }
 
 // scan a number, integer or float
-string scanNumber() {
-  string buffer = "";
+// string scanNumber() {
+//   string buffer = "";
   
-  // Implement this.
+//   // Implement this.
 
-  return buffer;
+//   return buffer;
+// }
+
+int scanNumber(string buffer){
+  if (buffer.find('.')==string::npos){
+    
+    return T_INT_LIT;
+  }else{
+   
+    return T_FLOAT_LIT;
+  }
+}
+int scanIndentifierAndKeyword(string buffer){
+  for(int i = 0; i<=13; i++){
+    if(buffer==tokenString[i]){
+      return i;
+    }
+  }
+  return T_IDENTIFIER;
+}
+
+int scanOperatorAndPunc(string buffer){
+  int token = 0;
+  for(int i = 14; i<=46;i++){
+    if(buffer==tokenString[i]){
+      token  = i;
+      break;
+    }
+  }
+  return token;
 }
 
 TokenNode getToken(string buffer){
-  
-  
-  TokenNode tmp;
-  if(buffer =="int"){
-    tmp.token = T_INT;
-    
-  }else if(buffer == "float"){
-    tmp.token = T_FLOAT;
-   
-  }else if(buffer == "char"){
-    tmp.token = T_CHAR;
 
-  }else if(buffer == "bool"){
-    tmp.token = T_BOOL;
-    
-  }else if(buffer == "void"){
-    tmp.token = T_VOID;
-   
-  }else if(buffer == "return"){
-    tmp.token = T_RETURN;
-   
-  }else if(buffer == "break"){
-    tmp.token = T_BREAK;
-  
-  }else if(buffer == "continue"){
-    tmp.token = T_CONTINUE;
-    
-  }else if(buffer == "for"){
-    tmp.token = T_FOR;
-  
-  }else if(buffer == "while"){
-    tmp.token = T_WHILE;
-   
-  }else if(buffer == "if"){
-    tmp.token = T_IF;
-    
-  }else if(buffer == "else"){
-    tmp.token = T_ELSE;
-    
-  }else if(buffer == "printf"){
-    tmp.token = T_PRINT;
- 
-  }else{
-    if(std::regex_match(buffer,std::regex("-?[0-9]+\\.{1}[0-9]+"))){
-    
-      tmp.token = T_FLOAT_LIT;
-     
-    }
-    else if(std::regex_match(buffer,std::regex("[0-9]+"))){
-      
-      tmp.token = T_INT_LIT;
-      
-    }
-    else if(std::regex_match(buffer,std::regex("[\\w]+"))){
-      tmp.token = T_IDENTIFIER;
-     
-    }
-    
-  }
+  TokenNode tmp;
   tmp.value = buffer;
+ 
+
+
+  if(std::regex_match(buffer, std::regex("[-]?[0-9]+[.]?[0-9]*"))){
+  
+    tmp.token = scanNumber(buffer);
+  }else if(std::regex_match(buffer, std::regex("[\\w]+"))){
+    tmp.token = scanIndentifierAndKeyword(buffer);
+  }else{
+    tmp.token = scanOperatorAndPunc(buffer);
+  }
   return tmp;
 
 }
@@ -122,36 +105,34 @@ pair<vector<TokenNode>, vector<string>> scan(const string &file_name) {
   // Implement this.
   
   if (infile.is_open()) {
-      
-      string SourceCode;
-      string line;
+      std::string line;
     
-      while(getline(infile,line)){
-          SourceCode+=line;
-          SourceCode+='\n';
-          
-      }
-      SourceCode+='\0';
-     
-
-      string::iterator current;
-      current = SourceCode.begin();
-
-      string buffer = "";
-      while(*current!='\0'){
-          char c  = *current;
-         
-          if(c == ' ' || c == '\t' || c =='\n' || c =='\r'){
-            if(buffer != ""){
-              TokenNode tmp = getToken(buffer);
-              tokens.push_back(tmp);
+      while(std::getline(infile,line)){
+        string buffer = "";
+        string::iterator current;
+        current = line.begin();
+        line+='\0';
+      
+        while(*current!='\0'){
+          char c = *current;
+          if(c == ' '|| c =='\t' || c =='\n' || c =='\r' ){
+            if(buffer!=""){
+              tokens.push_back(getToken(buffer));
               buffer = "";
             }
-          }
-          else if('0'<=c && c<='9'){
+          }else if(c=='{' || c == '}' || c == '(' || c==')' || c == ';' || c==','){
+            if(buffer!=""){
+              tokens.push_back(getToken(buffer));
+              buffer = "";
+            }
             buffer+=c;
-          }
-          else if(c == '\"' || c == '\'' ){
+            tokens.push_back(getToken(buffer));
+            buffer = "";
+          } else if(c == '\"' || c == '\'' ){
+            if(buffer!=""){
+              tokens.push_back(getToken(buffer));
+              buffer = "";
+            }
             current+=1;
             while(true){
               c = *current;
@@ -165,206 +146,154 @@ pair<vector<TokenNode>, vector<string>> scan(const string &file_name) {
             tmp.token = T_STR_LIT;
             tmp.value = buffer;
             tokens.push_back(tmp);
+            
             buffer = "";
-            
-          }
-          else if('a'<= c && c <='z' || 'A'<=c && c<='Z'){
-            buffer+=c;
-          }else if(c=='.'){
-            buffer+=c;
-          }
-          else{
-            if(buffer!=""){
-              TokenNode tmp = getToken(buffer);
-              tokens.push_back(tmp);
+          
+          }else{
+            if(buffer!="" &&(c=='+' || c== '-'||c=='*' || c == '/')){
+              tokens.push_back(getToken(buffer));
               buffer = "";
             }
-            TokenNode tmp;
-            if(c==';'){
-              buffer+=c;
-              tmp.token = T_SEMICOLON;
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='&'){
-              buffer+=c;
-              if(*(current+1)=='&'){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_AND;
-              }else{
-                tmp.token = T_BITW_AND;
-              }
-              tmp.value  = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='|'){
-              buffer+=c;
-              if(*(current+1)=='|'){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_OR;
-              }else{
-                tmp.token = T_BITW_OR;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='>'){
-              buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_GEQ;
-              }else{
-                tmp.token = T_GT;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='<'){
-              buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_LEQ;
-              }else{
-                tmp.token = T_LT;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='='){
-              buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_EQ;
-              }else{
-                tmp.token = T_ASSIGN;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c=='!'){
-              buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_NEQ;
-              }else{
-                tmp.token = T_NEGATION;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            }else if(c == '(' || c==')' || c =='{' || c == '}' || c==','){
-              buffer+=c;
-              switch(c){
-                case '(':
-                  tmp.token = T_LPAREN;
-                  break;
-                case ')':
-                  tmp.token = T_RPAREN;
-                  break;
-                case '{':
-                  tmp.token = T_LCURLY;
-                  break;
-                case '}':
-                  tmp.token = T_RCURLY;
-                  break;
-                case ',':
-                  tmp.token = T_COMMA;
-                  break;
-              }
-              tokens.push_back(tmp);
-              buffer ="";
-
-            }else if(c=='+'){
-              buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_PLUS_ASSIGN;
-              }else if(*(current+1)=='+'){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_UNARY_PLUS;
-              }else{
-                tmp.token = T_PLUS;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-            
-            }else if(c=='-'){
-              if(T_INT_LIT <= tokens.back().token && tokens.back().token<= T_IDENTIFIER){
-                buffer+=c;
-                if(*(current+1)=='='){
-                  current+=1;
-                  buffer+=*current;
-                  tmp.token = T_MINUS_ASSIGN;
-                }else if(*(current+1)=='-'){
-                  current+=1;
-                  buffer+=*current;
-                  tmp.token = T_UNARY_MINUS;
-                }else{
-                  tmp.token = T_MINUS;
-                }
-                tmp.value = buffer;
-                tokens.push_back(tmp);
-                buffer = "";
-              }else{
-                buffer+=c;
-              }
-
-            }else if(c=='*'){
-               buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_STAR_ASSIGN;
-              }else{
-                tmp.token = T_STAR;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
-
-            }else if (c== '/'){
-               buffer+=c;
-              if(*(current+1)=='='){
-                current+=1;
-                buffer+=*current;
-                tmp.token = T_SLASH_ASSIGN;
-              }else if(*(current+1)=='/'){
-                current+=1;
-                while(true){
-                  c = *current;
-                  if(c == '\n'){
-                    break;
-                  }
+            char nc = *(current+1);
+            switch(c){
+              case '+':
+                if(nc=='+' || nc == '='){
                   buffer+=c;
-                  current+=1;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
                 }
-                tmp.token = T_COMMENT;
-                           
-              }else{
-                tmp.token = T_SLASH;
-              }
-              tmp.value = buffer;
-              tokens.push_back(tmp);
-              buffer = "";
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                
+                break;
+              case '-':
+                if(T_INT_LIT <= tokens.back().token && tokens.back().token<= T_IDENTIFIER){
+                  if(nc=='-' || nc == '='){
+                    buffer+=c;
+                    buffer+=nc;
+                  }else{
+                    buffer+=c;
+                  }
+                  tokens.push_back(getToken(buffer));
+                  buffer = "";
+                }else{
+                  buffer+=c;
+                }
+                break;
+              case '*':
+                if(nc == '='){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '/':
+                if(nc =='/'){
+                  buffer+=c;
+                  buffer+=nc;
+                  current+=2;
+                  while(*current!='\0'){
+                    buffer+=*current;
+                    current+=1;
+                  }
+                  TokenNode tmp;
+                  tmp.token = T_COMMENT;
+                  tmp.value = buffer;
+                  tokens.push_back(tmp);
+                
+                  buffer = "";
+                }else{
+                  if(nc=='='){
+                    buffer+=c;
+                    buffer+=nc;
+                  }else{
+                    buffer+=c;
+                  }
+                  tokens.push_back(getToken(buffer));
+                  buffer = "";
+                }
+                break;
+              case '|':
+                if(nc=='|'){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '&':
+                if(nc=='&'){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '!':
+                if(nc=='='){
+                  buffer+=c;
+                  buffer+=nc;
 
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '=':
+                if(nc=='='){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '<':
+                if(nc=='='){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              case '>':
+                if(nc=='='){
+                  buffer+=c;
+                  buffer+=nc;
+                }else{
+                  buffer+=c;
+                }
+                tokens.push_back(getToken(buffer));
+                buffer = "";
+                break;
+              default:
+                buffer+=c;
+                break;
+                
             }
-            
-            
           }
           current+=1;
+        }
+        if(buffer!=""){
+          tokens.push_back(getToken(buffer));
+          
+        }
+        
       }
-     
-    
-  
+        
+        
     
   }
   // close the file
